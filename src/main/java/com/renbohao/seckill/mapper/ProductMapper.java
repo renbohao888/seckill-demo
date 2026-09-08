@@ -13,14 +13,14 @@ import org.apache.ibatis.annotations.Update;
 public interface ProductMapper extends BaseMapper<Product> {
 
     /**
-     * 乐观锁扣减库存：只有"当前版本号 = 期望版本号"且"库存 > 0"时才扣减，
-     * 否则返回 0（表示更新失败，说明已经被别人抢先扣减或库存耗尽）。
+     * 原子扣减库存：仅当"库存 > 0"时才扣减，保证库存永不为负（不超卖）。
      *
-     * @param id      商品 id
-     * @param version 期望的（读到的）版本号
-     * @return 影响行数：1-成功，0-失败
+     * <p>相比 version 乐观锁，这种方式在高并发下**不会因版本冲突丢单**：
+     * 每个成功请求都真实扣减 1，直到库存为 0；并发由数据库行锁串行化，安全且高效。</p>
+     *
+     * @param id 商品 id
+     * @return 影响行数：1-成功，0-失败（库存已耗尽或商品不存在）
      */
-    @Update("UPDATE product SET stock = stock - 1, version = version + 1 " +
-            "WHERE id = #{id} AND version = #{version} AND stock > 0")
-    int deductStockByVersion(@Param("id") Long id, @Param("version") Integer version);
+    @Update("UPDATE product SET stock = stock - 1 WHERE id = #{id} AND stock > 0")
+    int deductStock(@Param("id") Long id);
 }

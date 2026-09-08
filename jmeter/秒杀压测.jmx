@@ -2,7 +2,7 @@
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="秒杀压测" enabled="true">
-      <stringProp name="TestPlan.comments">秒杀接口并发压测：Redis 预减 + 数据库乐观锁，验证不超卖</stringProp>
+      <stringProp name="TestPlan.comments">秒杀接口并发压测：Redis 预减 + 数据库 stock>0 条件更新，验证不超卖</stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>

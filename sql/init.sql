@@ -6,13 +6,12 @@
 CREATE DATABASE IF NOT EXISTS `seckill_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `seckill_db`;
 
--- 秒杀商品表：stock 剩余库存，version 乐观锁版本号
+-- 秒杀商品表：stock 剩余库存（用 stock>0 条件更新保证不超卖）
 DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product` (
-    `id`      BIGINT       NOT NULL AUTO_INCREMENT COMMENT '商品ID',
-    `name`    VARCHAR(64)  NOT NULL COMMENT '商品名称',
-    `stock`   INT          NOT NULL DEFAULT 0 COMMENT '剩余可秒杀库存',
-    `version` INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    `id`      BIGINT      NOT NULL AUTO_INCREMENT COMMENT '商品ID',
+    `name`    VARCHAR(64) NOT NULL COMMENT '商品名称',
+    `stock`   INT         NOT NULL DEFAULT 0 COMMENT '剩余可秒杀库存',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀商品表';
 
@@ -29,5 +28,5 @@ CREATE TABLE `seckill_order` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀订单表';
 
 -- 测试数据：库存 10 件
-INSERT INTO `product` (`name`, `stock`, `version`) VALUES
-('测试秒杀商品', 10, 0);
+INSERT INTO `product` (`name`, `stock`) VALUES
+('测试秒杀商品', 10);

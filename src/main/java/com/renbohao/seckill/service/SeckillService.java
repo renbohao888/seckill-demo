@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 秒杀业务服务：负责"限流 → Redis 预减 → 数据库乐观锁兜底 → 落订单"整条链路。
+ * 秒杀业务服务：负责"限流 → Redis 预减 → 数据库条件更新兜底 → 落订单"整条链路。
  */
 @Slf4j
 @Service
@@ -85,18 +85,10 @@ public class SeckillService {
             return Result.fail("已抢光，下次早点来");
         }
 
-        // 3) 读取商品当前版本号，用于数据库乐观锁
-        Product product = productMapper.selectById(productId);
-        if (product == null) {
-            // 商品不存在，回补 Redis 库存
-            redisTemplate.opsForValue().increment(stockKey(productId));
-            return Result.fail("商品不存在");
-        }
-
-        // 4) 数据库乐观锁扣减 + 写订单（同一事务）
-        boolean ok = txExecutor.deductAndOrder(productId, product.getVersion(), userId);
+        // 3) 数据库条件更新扣减库存 + 写订单（同一事务，原子且不超卖、不丢单）
+        boolean ok = txExecutor.deductAndOrder(productId, userId);
         if (!ok) {
-            // 乐观锁失败：说明并发下库存已被他人扣完，回补 Redis 预减的 1 个，保持 Redis/DB 一致
+            // 扣减失败：说明库存已被抢空，回补 Redis 预减的 1 个，保持 Redis/DB 一致
             redisTemplate.opsForValue().increment(stockKey(productId));
             return Result.fail("手慢了，已被抢完");
         }

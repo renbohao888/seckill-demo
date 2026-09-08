@@ -25,17 +25,16 @@ public class SeckillTxExecutor {
     private SeckillOrderMapper orderMapper;
 
     /**
-     * 乐观锁扣减库存并写入订单。
+     * 条件更新扣库存并写入订单。
      *
      * @param productId 商品 id
-     * @param version   读到的版本号（乐观锁条件）
      * @param userId    用户 id
-     * @return true-成功；false-扣减失败（版本冲突或库存已耗尽）
+     * @return true-成功；false-扣减失败（库存已耗尽或商品不存在）
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean deductAndOrder(Long productId, Integer version, Long userId) {
-        // 乐观锁更新：只有版本号一致且库存>0 时才扣减
-        int rows = productMapper.deductStockByVersion(productId, version);
+    public boolean deductAndOrder(Long productId, Long userId) {
+        // 原子扣减：只有库存 > 0 才扣减，保证不超卖且不丢单
+        int rows = productMapper.deductStock(productId);
         if (rows == 0) {
             return false;
         }
